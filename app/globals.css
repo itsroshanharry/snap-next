@@ -74,3 +74,16 @@
       @apply bg-background text-foreground;
     }
   }
+
+  /* Nice looking thin dark mode scrollbar */
+::-webkit-scrollbar {
+	width: 0.5rem;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: #5d5d5d;
+	border-radius: 1rem;
+	height: 4px;
+}
