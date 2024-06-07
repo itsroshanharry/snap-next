@@ -18,11 +18,17 @@ const SendMsgInput = () => {
 	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsLoading(true);
+		// console.log("Sending message:", messageContent); // Log message before sending
 		try {
-			await sendMessageAction(receiverId, messageContent, "text");
+			const response = await sendMessageAction(receiverId, messageContent, "text");
+			// console.log("Message sent response", response); // Log response after message is sent
+			// if (response.success) {
+			// 	setMessageContent(""); // Clear input field
+			// }
 			setMessageContent("");
+			// console.log("Message content after clear:", ""); // Log message content after clearing
 		} catch (error) {
-			console.log(error);
+			console.error("Error sending message:", error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -41,18 +47,21 @@ const SendMsgInput = () => {
 			</div>
 			<form
 				onSubmit={handleSendMessage}
-				className='flex-1 flex  items-center gap-1 bg-sigBackgroundSecondaryHover rounded-full border   border-sigColorBgBorder'
+				className='flex-1 flex items-center gap-1 bg-sigBackgroundSecondaryHover rounded-full border border-sigColorBgBorder'
 			>
 				<Input
 					placeholder='Send a chat'
 					className='bg-transparent focus:outline-transparent border-none outline-none w-full h-full rounded-full'
 					type='text'
 					value={messageContent}
-					onChange={(e) => setMessageContent(e.target.value)}
+					onChange={(e) => {
+						setMessageContent(e.target.value);
+						// console.log("Input changed:", e.target.value); // Log input changes
+					}}
 					disabled={isLoading}
 				/>
 				<Button size={"sm"} className='bg-transparent hover:bg-transparent text-sigSnapChat' type='submit'>
-					{!isLoading && <TextMessageSent className=' scale-150 mr-1' />}
+					{!isLoading && <TextMessageSent className='scale-150 mr-1' />}
 					{isLoading && <Loader2 className='h-6 w-6 animate-spin' />}
 				</Button>
 			</form>

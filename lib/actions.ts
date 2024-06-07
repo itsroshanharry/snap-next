@@ -32,7 +32,7 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 	noStore();
 	try {
 		const session = await auth();
-		if (!session) return;
+		if (!session) return { success: false, message: "No session found" };
 		await connectToMongoDB();
 		const senderId = session.user._id;
 
@@ -62,11 +62,11 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 			await chat.save();
 		}
 
-	//REVALIDATE PATH SHOULD BE ADDED HERE
+		//REVALIDATE PATH SHOULD BE ADDED HERE
 
-		return newMessage;
+		return { success: true, message: newMessage };
 	} catch (error: any) {
 		console.error("Error in sendMessage:", error.message);
-		throw error;
+		return { success: false, message: error.message };
 	}
 };
