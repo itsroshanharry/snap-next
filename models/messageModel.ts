@@ -1,8 +1,9 @@
-import mongoose, { Document, Model, Schema, Types } from "mongoose";
+import mongoose, { Document, Model, PopulatedDoc, Schema, Types } from "mongoose";
+import { IUserDocument } from "./userModel";
 
 export interface IMessage {
-    sender: Types.ObjectId;
-    receiver: Types.ObjectId;
+    sender: Types.ObjectId | PopulatedDoc<IUserDocument>;// Refine the type of sender
+    receiver: Types.ObjectId | PopulatedDoc<IUserDocument>;
     content: string;
     messageType: "text" | "image";
     opened: boolean;

@@ -63,6 +63,9 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 		}
 
 		//REVALIDATE PATH SHOULD BE ADDED HERE
+		// revalidatePath(`/chat/${receiverId}`);
+
+		revalidatePath("/chat/[id]", "page");
 
 		return { success: true, message: newMessage };
 	} catch (error: any) {
