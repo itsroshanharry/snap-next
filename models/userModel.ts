@@ -1,4 +1,4 @@
-import mongoose, { Document, Model } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IUser {
   username: string;
@@ -8,6 +8,7 @@ export interface IUser {
 }
 
 export interface IUserDocument extends IUser, Document {
+  _id: Schema.Types.ObjectId; // Explicitly type _id
   createdAt: Date;
   updatedAt: Date;
 }
