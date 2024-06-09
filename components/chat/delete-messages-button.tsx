@@ -1,12 +1,21 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { deleteChatAction } from "@/lib/actions";
 import { Trash } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useFormState } from "react-dom";
 
 const DeleteMessagesButton = () => {
+	const {id: userId} = useParams<{id: string}>();
+	const deleteChatActionWithId = deleteChatAction.bind(null, userId);
+	const [errorMessage, dispatch] = useFormState(deleteChatActionWithId, null);
+
+
 	return (
-		<form className='flex flex-col'>
+		<form action={dispatch} className='flex flex-col'>
 			<DeleteButton />
+			{errorMessage ? <p className="text-red-500">{errorMessage}</p> : null}
 		</form>
 	);
 };

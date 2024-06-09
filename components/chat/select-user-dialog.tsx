@@ -1,18 +1,59 @@
 import { Dialog, DialogContent, DialogFooter, DialogClose, DialogHeader } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { TextMessageSent } from "../svgs/chatSvg";
-import { SearchIcon } from "lucide-react";
+import { Loader, Loader2, SearchIcon } from "lucide-react";
 import UserCard from "./user-card";
+import { useEffect, useState } from "react";
+import { IUserDocument } from "@/models/userModel";
+import { useRouter } from "next/navigation";
+import { sendMessageAction } from "@/lib/actions";
 
 type SelectUserDialogProps = {
-	selectedFile: string | undefined;
+	selectedFile: string;
 	onClose: () => void;
 	onPrev: () => void;
 };
 
-const SelectUserDialog = ({ selectedFile, onClose, onPrev }: SelectUserDialogProps) => {
-	const handleSendMessage = () => console.log("message sent");
 
+
+const SelectUserDialog = ({ selectedFile, onClose, onPrev }: SelectUserDialogProps) => {
+	
+	const [users, setUsers ] = useState([]);
+	const [selectedUser, setSelectedUser] = useState<IUserDocument | null>(null);
+	const [isSendingMessage, setIsSendingMessage] = useState(false);
+	const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+	const router = useRouter();
+
+	useEffect(() => {
+		const getUsers = async () => {
+			setIsFetchingUsers(true);
+			try {
+				const res = await fetch('api/chat/get-users');
+				const data = await res.json();
+				setUsers(data);
+			} catch (error) {
+				console.log(error);
+			} finally {
+				setIsFetchingUsers(false);
+			}
+		}
+		getUsers();
+	}, [])
+
+	const handleSelecetedUser = (user: IUserDocument) => setSelectedUser(user);
+
+	const handleSendMessage = async () => {
+		setIsSendingMessage(true);
+		try {
+			await sendMessageAction(selectedUser?._id, selectedFile, "image");
+			router.push(`/chat/${selectedUser?._id}`)
+		} catch (error) {
+			console.log(error)
+		} finally {
+			setIsSendingMessage(false);
+		}
+	}
+ 
 	return (
 		<Dialog open={!!selectedFile}>
 			<DialogContent
@@ -29,9 +70,17 @@ const SelectUserDialog = ({ selectedFile, onClose, onPrev }: SelectUserDialogPro
 						/>
 					</div>
 					<p className='font-semibold py-2'>Chats:</p>
-					<div className='flex flex-col max-h-48 bg-sigSurface rounded-md overflow-auto'>
-						<UserCard />
+					{users.map((user: IUserDocument) => (
+						<div key={user._id} className='flex flex-col max-h-48 bg-sigSurface rounded-md overflow-auto'>
+						<UserCard user={user} handleSelectedUser= {handleSelecetedUser} selectedUser = {selectedUser} />
 					</div>
+					))}
+
+					{isFetchingUsers && (
+						<div className="flex justify-center items-center">
+							<Loader2 className="w-8 h-8 animate-spin" />
+						</div>
+					)}
 				</DialogHeader>
 				<DialogFooter className='mx-auto flex items-center'>
 					<DialogClose asChild>
@@ -51,8 +100,16 @@ const SelectUserDialog = ({ selectedFile, onClose, onPrev }: SelectUserDialogPro
 						size={"sm"}
 						className='rounded-full bg-sigSnapChat hover:bg-sigSnapChat gap-1'
 						onClick={handleSendMessage}
+						disabled={!selectedUser || isSendingMessage}
+						
 					>
-						Send To <TextMessageSent className='text-white scale-95 my-auto' />
+						{isSendingMessage ? (
+							<Loader className="w-6 h-6 animate-spin" />
+						) : (
+							<>
+							Send To <TextMessageSent className='text-white scale-95 my-auto' />
+							</>
+						)}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

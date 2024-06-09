@@ -63,9 +63,9 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 		}
 
 		//REVALIDATE PATH SHOULD BE ADDED HERE
-		// revalidatePath(`/chat/${receiverId}`);
+		revalidatePath(`/chat/${receiverId}`);
 
-		revalidatePath("/chat/[id]", "page");
+		
 
 		return { success: true, message: newMessage };
 	} catch (error: any) {
@@ -73,3 +73,25 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 		return { success: false, message: error.message };
 	}
 };
+
+export const deleteChatAction = async (userId: string) => {
+	try {
+		await connectToMongoDB();
+		const {user} = await auth() || {};
+		if(!user) return;
+		const chat = await Chat.findOne({participants: {$all: [user._id, userId]}});
+		if(!chat) return;
+
+		const messageIds = chat.messages.map(messageId => messageId.toString());
+		await Message.deleteMany({_id: {$in: messageIds}});
+		await Chat.deleteOne({_id: chat._id});
+
+		revalidatePath("/chat/[id]", "page");
+
+
+	} catch (error:any) {
+		console.error("Error in deletechat: ", error.message);
+		throw error;
+	}
+	redirect("/chat");
+}
