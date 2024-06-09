@@ -3,9 +3,10 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "./logout-button";
+import { auth } from "@/auth";
 
 const Navbar = async () => {
-
+	const session = await auth();
 	return (
 		<header className='w-full py-4 px-8 flex justify-between items-center'>
 			<Image src='/logo.svg' width={40} height={40} alt='Snapchat logo' className='cursor-pointer' />
@@ -18,12 +19,12 @@ const Navbar = async () => {
 			</div>
 			<div className='flex space-x-2'>
 				<Button className='bg-black text-white rounded-full p-3 text-xs md:text-sm'>Watch tutorial</Button>
-				<LogoutButton />
-				{/* <form >
-			<Button className='bg-black text-white rounded-full p-3 text-xs md:text-sm'>
-				<LogOut className='cursor-pointer' />
-			</Button>
-		</form> */}
+				{!session && (
+					<Button asChild className='bg-black text-white rounded-full p-3 text-xs md:text-sm'>
+						<Link href={"/login"}>Login</Link>
+					</Button>
+				)}
+				{session?.user && <LogoutButton />}
 			</div>
 		</header>
 	);

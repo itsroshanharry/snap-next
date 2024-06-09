@@ -5,7 +5,6 @@ import Chat from "./chat";
 const Chats = async () => {
     const session = await auth();
     const chats = session?.user ? await getUsersForSidebar(session.user._id) : [];
-    console.log(chats);
   return (
     <nav className="flex-1 overflow-y-auto">
      <ul> 
