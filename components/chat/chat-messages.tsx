@@ -1,14 +1,13 @@
 "use client";
-
-import { IMessageDocument } from "@/models/messageModel";
-import { PopulatedDoc } from "mongoose";
+import { IMessageDocument, IPopulatedMessageDocument } from "@/models/messageModel";
 import { Session } from "next-auth";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent } from "../ui/dialog";
+import mongoose from "mongoose";
 
 type ChatMessageProps = {
-  messages: IMessageDocument[] | PopulatedDoc<IMessageDocument>[];
+  messages: (IMessageDocument | IPopulatedMessageDocument)[];
   session: Session | null;
 };
 
@@ -26,49 +25,79 @@ const ChatMessages = ({ messages, session }: ChatMessageProps) => {
   return (
     <>
       {messages.map((message, idx) => {
-        if (!message) return null; // Ensure message is defined
+        if (!message) return null;
 
-        const amISender = message.sender._id.toString() === session?.user?._id.toString();
-        const senderFullName = message.sender?.fullName ? message.sender.fullName.toUpperCase() : "";
+        const amISender =
+          message.sender instanceof mongoose.Types.ObjectId
+            ? message.sender.toString() === session?.user?._id
+            : message.sender._id.toString() === session?.user?._id;
+
+        const senderFullName =
+          message.sender instanceof mongoose.Types.ObjectId
+            ? ""
+            : message.sender.fullName
+            ? message.sender.fullName.toUpperCase()
+            : "";
+
         const isMessageImage = message.messageType === "image";
+
         const isPrevMessageFromSameSender =
-          idx > 0 && messages[idx - 1]?.sender._id.toString() === message.sender._id.toString();
+          idx > 0 &&
+          messages[idx - 1].sender &&
+          (message.sender instanceof mongoose.Types.ObjectId
+            ? messages[idx - 1].sender.toString() === message.sender.toString()
+            : messages[idx - 1].sender._id.toString() === message.sender._id.toString());
+
         const handleImageLoad = () => {
           lastMsgRef.current?.scrollIntoView({ behavior: "smooth" });
         };
 
         return (
-          <div key={message._id} className="w-full" ref={lastMsgRef}>
-            {!isPrevMessageFromSameSender && (
+          <div key={`${message._id}`} className="w-full" ref={lastMsgRef}>
+            {!isPrevMessageFromSameSender && message.sender && (
               <p
-                className={`font-bold mt-2 text-xs ${amISender ? "text-sigSnapImg" : "text-sigSnapChat"}`}
+                className={`font-bold mt-2 text-xs ${
+                  amISender ? "text-sigSnapImg" : "text-sigSnapChat"
+                }`}
               >
                 {amISender ? "ME" : senderFullName}
               </p>
             )}
-            <div className={`border-l-2 ${amISender ? "border-l-sigSnapImg" : "border-l-sigSnapChat"}`}>
-              <div className={`flex items-center w-1/2 p-2 rounded-sm`}>
-                {isMessageImage ? (
-                  <div className="relative">
-                    <Image
-                      src={message.content}
-                      width={200}
-                      height={200}
-                      className="h-auto w-auto object-cover cursor-pointer"
-                      alt="Image"
-                      onLoad={handleImageLoad}
-                      onClick={() => setIsPreviewImage({ open: true, imgURL: message.content })}
-                    />
-                  </div>
-                ) : (
-                  <p className="text-sm">{message.content}</p>
-                )}
+            <div
+              className={`border-l-2 ${
+                amISender ? "border-l-sigSnapImg" : "border-l-sigSnapChat"
+              }`}
+            >
+              <div className={`flex items-center w-1/2 p-2 rounded-sm `}>
+			  {isMessageImage && message.content ? (
+  <div className="relative">
+    <Image
+      src={message.content}
+      layout="responsive" // Use responsive layout
+      width={200} // Adjust width as needed
+      height={200} // Adjust height as needed
+      className="h-auto w-auto object-cover cursor-pointer"
+      alt="Image"
+      onLoad={handleImageLoad}
+      onClick={() =>
+        setIsPreviewImage({
+          open: true,
+          imgURL: message.content,
+        })
+      }
+    />
+  </div>
+) : (
+  <p className="text-sm">
+    {message.content ? message.content : ""}
+  </p>
+)}
+
               </div>
             </div>
           </div>
         );
       })}
-
       <Dialog
         open={isPreviewImage.open}
         onOpenChange={() => setIsPreviewImage({ open: false, imgURL: "" })}
