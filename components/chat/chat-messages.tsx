@@ -69,30 +69,28 @@ const ChatMessages = ({ messages, session }: ChatMessageProps) => {
               }`}
             >
               <div className={`flex items-center w-1/2 p-2 rounded-sm `}>
-			  {isMessageImage && message.content ? (
-  <div className="relative">
-    <Image
-      src={message.content}
-      layout="responsive" // Use responsive layout
-      width={200} // Adjust width as needed
-      height={200} // Adjust height as needed
-      className="h-auto w-auto object-cover cursor-pointer"
-      alt="Image"
-      onLoad={handleImageLoad}
-      onClick={() =>
-        setIsPreviewImage({
-          open: true,
-          imgURL: message.content,
-        })
-      }
-    />
-  </div>
-) : (
-  <p className="text-sm">
-    {message.content ? message.content : ""}
-  </p>
-)}
-
+                {isMessageImage && message.content ? (
+                  <div className="relative">
+                    <Image
+                      src={message.content}
+                      width={200}
+                      height={200}
+                      className="h-auto w-auto object-cover cursor-pointer"
+                      alt="Image"
+                      onLoad={handleImageLoad}
+                      onClick={() =>
+                        setIsPreviewImage({
+                          open: true,
+                          imgURL: message.content,
+                        })
+                      }
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    {message.content ? message.content : ""}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -103,12 +101,14 @@ const ChatMessages = ({ messages, session }: ChatMessageProps) => {
         onOpenChange={() => setIsPreviewImage({ open: false, imgURL: "" })}
       >
         <DialogContent
-          className="max-w-4xl ,h-3/4 bg-sigMain border bg-sigColorBgBorder outline-none"
+          className="max-w-4xl h-auto bg-sigMain border border-sigColorBgBorder outline-none flex justify-center items-center"
           autoFocus={false}
         >
           <Image
             src={isPreviewImage.imgURL}
-            fill
+            layout="responsive"
+            width={800}
+            height={800}
             className="object-contain p-2"
             alt="Image"
           />
