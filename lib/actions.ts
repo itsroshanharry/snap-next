@@ -1,10 +1,11 @@
-"use server";
+// actions.ts
 import { auth, signIn, signOut } from "@/auth";
 import { connectToMongoDB } from "./db";
 import { v2 as cloudinary } from "cloudinary";
 import Message, { IMessageDocument } from "@/models/messageModel";
 import Chat, { IChatDocument } from "@/models/chatModel";
 import { revalidatePath, unstable_noStore as noStore } from "next/cache";
+import { getSocketServer } from "@/socketServer"; // Import the Socket.IO instance
 import { redirect } from "next/navigation";
 
 cloudinary.config({
@@ -62,10 +63,20 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 			await chat.save();
 		}
 
-		//REVALIDATE PATH SHOULD BE ADDED HERE
-		revalidatePath(`/chat/${receiverId}`);
+		// Emit the new message to other clients
+		const io = getSocketServer();
+		if (io) {
+			io.emit("message", {
+				sender: senderId,
+				receiver: receiverId,
+				content: uploadedResponse?.secure_url || content,
+				messageType,
+				timestamp: newMessage.createdAt,
+			});
+		}
 
-		
+		// Revalidate path after sending message
+		revalidatePath(`/chat/${receiverId}`);
 
 		return { success: true, message: newMessage };
 	} catch (error: any) {
@@ -77,21 +88,26 @@ export const sendMessageAction = async (receiverId: string, content: string, mes
 export const deleteChatAction = async (userId: string) => {
 	try {
 		await connectToMongoDB();
-		const {user} = await auth() || {};
-		if(!user) return;
-		const chat = await Chat.findOne({participants: {$all: [user._id, userId]}});
-		if(!chat) return;
+		const { user } = await auth() || {};
+		if (!user) return;
+		const chat = await Chat.findOne({ participants: { $all: [user._id, userId] } });
+		if (!chat) return;
 
 		const messageIds = chat.messages.map(messageId => messageId.toString());
-		await Message.deleteMany({_id: {$in: messageIds}});
-		await Chat.deleteOne({_id: chat._id});
+		await Message.deleteMany({ _id: { $in: messageIds } });
+		await Chat.deleteOne({ _id: chat._id });
 
+		// Emit chat deletion event to other clients
+		const io = getSocketServer();
+		if (io) {
+			io.emit("chatDeleted", userId);
+		}
+
+		// Revalidate path after deleting chat
 		revalidatePath("/chat/[id]", "page");
-
-
-	} catch (error:any) {
+	} catch (error: any) {
 		console.error("Error in deletechat: ", error.message);
 		throw error;
 	}
 	redirect("/chat");
-}
+};
